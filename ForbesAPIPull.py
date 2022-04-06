@@ -3,6 +3,8 @@ import json
 import os
 import requests
 import matplotlib.pyplot as plt
+import datetime
+from datetime import date
 
 def read_cache(filename):
     try:
@@ -42,7 +44,7 @@ def create_tables(cur, conn):
             gender TEXT,
             country_id INTEGER,
             industry_id INTEGER,
-            net_worth INTEGER,
+            net_worth FLOAT,
             age INTEGER
         )
     """
@@ -66,18 +68,82 @@ def create_tables(cur, conn):
     conn.commit()
 
 def get_key_counter(cur, table_name):
-    sql = f"SELECT MAX(key) FROM {table_name}"
+    sql = f"SELECT MAX(id) FROM {table_name}"
 
     try:
         cur.execute(sql)
         results = cur.fetchall()
-        return results[-1][0]
+        return results[-1][0] + 1
     except:
         return 0
     
 
+def insert_into_countries(cur, conn, data, n = 25):
+    id = get_key_counter(cur, "Countries")
+    id_limit = id + n
+
+    for dict in data:
+        id = get_key_counter(cur, "Countries")
+        if id >= id_limit:
+            break
+        country = dict['countryOfCitizenship']
+        cur.execute("INSERT OR IGNORE INTO Countries (id, name) VALUES (?,?)",(id, country))
+        
+
+    conn.commit()
 
 
+def insert_into_industries(cur, conn, data, n = 25):
+    id = get_key_counter(cur, "Industries")
+    id_limit = id + n
+
+    for dict in data:
+        id = get_key_counter(cur, "Industries")
+        if id >= id_limit:
+            break
+        industry = dict['industries'][0]
+        cur.execute("INSERT OR IGNORE INTO Industries (id, name) VALUES (?,?)",(id, industry))
+        
+    conn.commit()
+
+def insert_into_people(cur, conn, data, n = 25):
+    id = get_key_counter(cur, "People")
+    id_limit = id + n
+
+    for dict in data:
+        id = get_key_counter(cur, "People")
+        if id >= id_limit:
+            break
+        name = dict['personName']
+        gender = dict.get('gender', None)
+
+        country_name = dict['countryOfCitizenship']
+        cur.execute("SELECT id from Countries where name = ?", (country_name,))
+        country_id = cur.fetchone()[0]
+        
+
+        industry_name = dict['industries'][0]
+        cur.execute("SELECT id from Industries where name = ?", (industry_name,))
+        industry_id = cur.fetchone()[0]
+
+        net_worth = dict['finalWorth']
+
+        try:
+            today = date.today() 
+            birth_date = int((dict['birthDate']) / 1000)
+            birth_datetime = datetime.datetime(1970, 1, 1) + datetime.timedelta(seconds=(birth_date))
+            age = today.year - birth_datetime.year - ((today.month, today.day) < (birth_datetime.month, birth_datetime.day))
+        except:
+            age = None
+
+        cur.execute("INSERT OR IGNORE INTO People (id, name, gender, country_id, industry_id, net_worth, age) VALUES (?,?,?,?,?,?,?)",(id, name, gender,  country_id, industry_id, net_worth, age))
+
+    conn.commit()
+
+
+
+
+    conn.commit()
 def main():
     filename = "cache_forbes.json"
     #data = call_api()
@@ -88,9 +154,10 @@ def main():
 
     data = read_cache(filename)
 
-    insert_n_rows_from_dict(cur, conn, data)
+    #insert_into_countries(cur, conn, data)
+    #insert_into_industries(cur, conn, data)
+    insert_into_people(cur, conn, data)
 
-    return
 
 if __name__ == "__main__":
     main()
