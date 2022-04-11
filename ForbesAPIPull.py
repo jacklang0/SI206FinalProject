@@ -38,7 +38,7 @@ def set_up_database(db_name):
 
 def create_tables(cur, conn):
     sql = """
-        CREATE TABLE IF NOT EXISTS People (
+        CREATE TABLE IF NOT EXISTS ForbesPeople (
             id INTEGER PRIMARY KEY, 
             name TEXT UNIQUE, 
             gender TEXT,
@@ -46,14 +46,6 @@ def create_tables(cur, conn):
             industry_id INTEGER,
             net_worth FLOAT,
             age INTEGER
-        )
-    """
-    cur.execute(sql)
-
-    sql = """
-        CREATE TABLE IF NOT EXISTS Countries (
-            id INTEGER PRIMARY KEY, 
-            name TEXT UNIQUE
         )
     """
     cur.execute(sql)
@@ -68,7 +60,11 @@ def create_tables(cur, conn):
     conn.commit()
 
 def get_key_counter(cur, table_name):
-    sql = f"SELECT MAX(id) FROM {table_name}"
+    id_var = "id"
+    if table_name == "CountryWealth":
+        id_var = "key"
+    
+    sql = f"SELECT MAX({id_var}) FROM {table_name}"
 
     try:
         cur.execute(sql)
@@ -77,7 +73,7 @@ def get_key_counter(cur, table_name):
     except:
         return 0
     
-
+"""
 def insert_into_countries(cur, conn, data, n = 25):
     id = get_key_counter(cur, "Countries")
     id_limit = id + n
@@ -91,7 +87,7 @@ def insert_into_countries(cur, conn, data, n = 25):
         
 
     conn.commit()
-
+"""
 
 def insert_into_industries(cur, conn, data, n = 25):
     id = get_key_counter(cur, "Industries")
@@ -107,20 +103,31 @@ def insert_into_industries(cur, conn, data, n = 25):
     conn.commit()
 
 def insert_into_people(cur, conn, data, n = 25):
-    id = get_key_counter(cur, "People")
+    id = get_key_counter(cur, "ForbesPeople")
     id_limit = id + n
 
     for dict in data:
-        id = get_key_counter(cur, "People")
+        id = get_key_counter(cur, "ForbesPeople")
         if id >= id_limit:
             break
         name = dict['personName']
         gender = dict.get('gender', None)
 
         country_name = dict['countryOfCitizenship']
-        cur.execute("SELECT id from Countries where name = ?", (country_name,))
-        country_id = cur.fetchone()[0]
-        
+
+        if country_name == "Czechia":
+            country_name = "Czech Republic"
+        elif country_name == "South Korea":
+            country_name = "Korea"
+
+        try:
+            cur.execute("SELECT key from CountryWealth where country = ?", (country_name,))
+            country_id = cur.fetchone()[0]
+        except:
+            # insert new country into CountryWealth
+            country_id = get_key_counter(cur, "CountryWealth")
+            cur.execute("INSERT OR IGNORE INTO CountryWealth (key, country, adults_in_thousands, mean_wealth_per_adult, median_wealth_per_adult, percent_under_10k, percent_10K_100k, percent_100K_1M, percent_over_1M, gini_percent) VALUES (?,?,?,?,?,?,?,?,?,?)",(country_id, country_name, None, None, None, None, None, None, None, None))
+            conn.commit()
 
         industry_name = dict['industries'][0]
         cur.execute("SELECT id from Industries where name = ?", (industry_name,))
@@ -136,7 +143,7 @@ def insert_into_people(cur, conn, data, n = 25):
         except:
             age = None
 
-        cur.execute("INSERT OR IGNORE INTO People (id, name, gender, country_id, industry_id, net_worth, age) VALUES (?,?,?,?,?,?,?)",(id, name, gender,  country_id, industry_id, net_worth, age))
+        cur.execute("INSERT OR IGNORE INTO ForbesPeople (id, name, gender, country_id, industry_id, net_worth, age) VALUES (?,?,?,?,?,?,?)",(id, name, gender,  country_id, industry_id, net_worth, age))
 
     conn.commit()
 
@@ -149,12 +156,11 @@ def main():
     #data = call_api()
     #write_cache(data, filename)
 
-    cur, conn = set_up_database("Forbes400.db")
+    cur, conn = set_up_database("Wealth.db")
     create_tables(cur, conn)
 
     data = read_cache(filename)
 
-    #insert_into_countries(cur, conn, data)
     #insert_into_industries(cur, conn, data)
     insert_into_people(cur, conn, data)
 
