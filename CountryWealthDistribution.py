@@ -89,11 +89,10 @@ def create_website_database(wealth_info, cur, conn, counter):
     conn.commit()
     
 def main():
-   
 
     wealth_info = get_website_info()
     cur, conn = setUpDatabase('Wealth.db')
     counter = get_key_counter(cur)
-    print(counter)
+
     create_website_database(wealth_info, cur, conn, counter)
 main()
