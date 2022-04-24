@@ -98,8 +98,8 @@ def graph_count_of_forbes_by_industry(cur, conn):
     bar_width = 0.2
     ind = np.arange(5)
     p1 = plt.bar(ind, mcount, bar_width, color = "blue", label="Male")
-    p2 = plt.bar(ind+bar_width, fcount, bar_width, color = "red", label="Female")
-    p3 = plt.bar(ind+2*bar_width, nacount, bar_width, color = "purple", label="N/A")
+    p2 = plt.bar(ind+bar_width, fcount, bar_width, color = "orange", label="Female")
+    p3 = plt.bar(ind+2*bar_width, nacount, bar_width, color = "green", label="N/A")
 
     plt.xlabel('Industry')
     plt.ylabel('Number of People on Forbes 400 List')
@@ -111,7 +111,32 @@ def graph_count_of_forbes_by_industry(cur, conn):
     plt.savefig('IndustryCounts.png')
     #plt.show()
 
-#4. Scatter plot: Number of Forbes 400 vs Gini Coef of Country
+#4. Scatter plot: Number of Forbes 400 Billionaires vs Gini Coef of Country
+def graph_gini_vs_number_billionaires(cur, conn):
+    sql = """
+    SELECT f.age, c.gini_percent
+        FROM ForbesPeople f
+        INNER JOIN CountryWealth c on c.key = f.country_id
+    """
+
+    results = cur.execute(sql).fetchall()
+    age = []
+    gini = []
+    for item in results:
+        if item[0]!=None and item[1]!=None:
+            age.append(item[0])
+            gini.append(item[1])
+
+    fig, ax = plt.subplots(figsize=(16,10))
+
+    ax.scatter(age, gini)
+
+    ax.set_xlabel('Age')
+    ax.set_ylabel('Gini Percentage')
+    ax.set_title("Country's Gini-Coefficent vs Age in Forbes 400 List")
+
+    plt.savefig('GiniAndAgeGraph.png')
+    plt.show()
 
 #5. Scatter plot: Age vs Net Worth Amoung Forbes 400
 def graph_age_vs_net_worth(cur, conn):
@@ -155,6 +180,7 @@ def main():
     graph_count_of_forbes_by_industry(cur, conn)
 
     #Chart 4
+    graph_gini_vs_number_billionaires(cur, conn)
 
     #Chart 5
     graph_age_vs_net_worth(cur, conn)

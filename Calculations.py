@@ -16,20 +16,13 @@ def total_wealth_US(US_key, cur, conn):
     mean_wealth = results[1]
     return adults*mean_wealth
 
-"""
-#Calculate a list of gini-coefficients
 def get_gini(cur, conn):
-    cur.execute('SELECT gini_percent FROM CountryWealth')
-    results = cur.fetchall()
-    gini_list = []
-
-    for item in results:
-        gini_list.append(item[-1])
-
-    return gini_list
-#Get number of billionaries in each and make it a dictionary
-#Plot scatterplot of number of billionaries vs gini-coefficient
-"""
+    cur.execute('SELECT country, gini_percent FROM CountryWealth')
+    results = cur.fetchall()[:-1]
+    sorted_results = sorted(results, key=lambda x: x[-1])
+    str_high_results = f'The countries with the highest income inequality due to the gini coefficient are {sorted_results[-1][0]}, {sorted_results[-2][0]}, {sorted_results[-3][0]}, {sorted_results[-4][0]}, and {sorted_results[-5][0]}.'
+    str_low_results = f'The countries with the lowest income inequality due to the gini coefficient are {sorted_results[0][0]}, {sorted_results[1][0]}, {sorted_results[2][0]}, {sorted_results[3][0]}, and {sorted_results[4][0]}.'
+    return str_high_results + '\n' + str_low_results
 
 def get_countries_with_most_forbes400(cur, conn):
     cur.execute("""
@@ -79,6 +72,7 @@ def write_calcs_to_file(cur, conn):
     
     f.write(get_countries_with_most_forbes400(cur, conn) + "\n")
     f.write(get_industries_with_most_forbes400(cur, conn) + "\n")
+    f.write(get_gini(cur, conn) + '\n')
     x = round(total_wealth_US(161, cur, conn) / 1000000000000, 3)
     f.write("The total wealth of all adults in the United States is $" + str(x) + " trillion \n")
     x = round(get_wealth_of_top_N_US_forbes400(cur, conn, 100)/ 1000000000000, 3)
@@ -89,13 +83,5 @@ def write_calcs_to_file(cur, conn):
 def main():
     cur, conn = CountryWealthDistribution.setUpDatabase('Wealth.db')
     write_calcs_to_file(cur, conn)
-    """
-    US_total_wealth = total_wealth_US(161, cur, conn)
-    print(f'Total US Wealth ${US_total_wealth}')
-
-    gini_coefficients = get_gini(cur, conn)
-    print("List of country's inequality percentage:")
-    print(gini_coefficients)
-    """
 
 main()
