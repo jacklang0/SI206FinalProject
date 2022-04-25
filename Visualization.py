@@ -75,7 +75,7 @@ def graph_count_by_country(cur, conn):
     #plt.show()
 
 
-#3. Pie chart: Count of Forbes 400 by Industry 
+#3. Bar graph: Count of Forbes 400 by Industry 
 def graph_count_of_forbes_by_industry(cur, conn):
     cur.execute("""
         SELECT i.name,
@@ -134,7 +134,6 @@ def graph_gini_vs_number_billionaires(cur, conn):
         key = item[0]
         gini_pct = item[1]
         count = country_counts[key]
-        print(key, gini_pct, count)
 
         if key not in keys:
             keys.append(key)
@@ -150,7 +149,7 @@ def graph_gini_vs_number_billionaires(cur, conn):
     ax.set_title("Country's Count of Individuals on Forbes 400 List vs Gini Percentage")
 
     plt.savefig('GiniCountGraph.png')
-    plt.show()
+    #plt.show()
 
 #5. Scatter plot: Age vs Net Worth Amoung Forbes 400
 def graph_age_vs_net_worth(cur, conn):
