@@ -6,6 +6,7 @@ import matplotlib.pyplot as plt
 import datetime
 from datetime import date
 
+# Reads json from cache
 def read_cache(filename):
     try:
         with open(filename, 'r', encoding='utf-8') as f:
@@ -15,6 +16,7 @@ def read_cache(filename):
     except:
         return {}
 
+# Saves json in a local cache 
 def write_cache(data, filename):
 
     dir_path = os.path.dirname(os.path.realpath(__file__))
@@ -24,18 +26,21 @@ def write_cache(data, filename):
     with open(cache_file_path, 'w') as f:
         f.write(data_json)
 
+# Calls Forbes400 API to get json of Forbes list
 def call_api():
     request_url = "https://forbes400.herokuapp.com/api/forbes400"
     resp = requests.get(request_url)
     data = json.loads(resp.content)
     return data
 
+# Sets up connection to the Wealth.db 
 def set_up_database(db_name):
     path = os.path.dirname(os.path.abspath(__file__))
     conn = sqlite3.connect(path+'/'+db_name)
     cur = conn.cursor()
     return cur, conn
 
+# Creates ForbesPeople and Industries tables in db
 def create_tables(cur, conn):
     sql = """
         CREATE TABLE IF NOT EXISTS ForbesPeople (
@@ -148,21 +153,18 @@ def insert_into_people(cur, conn, data, n = 25):
     conn.commit()
 
 
-
-
-    conn.commit()
 def main():
     filename = "cache_forbes.json"
-    #data = call_api()
-    #write_cache(data, filename)
+    data = call_api()
+    write_cache(data, filename)
 
     cur, conn = set_up_database("Wealth.db")
     create_tables(cur, conn)
 
     data = read_cache(filename)
 
-    #insert_into_industries(cur, conn, data)
-    insert_into_people(cur, conn, data)
+    insert_into_industries(cur, conn, data)
+    #insert_into_people(cur, conn, data)
 
 
 if __name__ == "__main__":
